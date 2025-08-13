@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess the Number - Multiplayer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .game-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .chat-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .players-section {
+            grid-column: 1 / -1;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #5a6fd8;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .feedback {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .chat-message {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .chat-message .nickname {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .chat-message .system-nickname {
+            font-weight: bold;
+            color: #dc3545;
+            font-style: italic;
+        }
+
+        .players-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .player-card {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .player-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .player-score {
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .welcome-screen {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .room-screen {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .game-screen {
+            display: none;
+        }
+
+        .room-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .room-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Guess the Number - Multiplayer</h1>
+        </div>
+
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="welcome-screen">
+            <h2>Welcome to Guess the Number!</h2>
+            <p>Create a new room or join an existing one to start playing.</p>
+            <div class="button-group">
+                <button onclick="showCreateRoom()">Create New Room</button>
+                <button onclick="showJoinRoom()">Join Existing Room</button>
+            </div>
+        </div>
+
+        <!-- Create Room Screen -->
+        <div id="createRoomScreen" class="room-screen" style="display: none;">
+            <h2>Create New Room</h2>
+            <div class="input-group">
+                <label for="createNickname">Enter your nickname:</label>
+                <input type="text" id="createNickname" placeholder="Your nickname" maxlength="20">
+            </div>
+            <div class="button-group">
+                <button onclick="createRoom()">Create Room</button>
+                <button onclick="showWelcome()">Back</button>
+            </div>
+        </div>
+
+        <!-- Join Room Screen -->
+        <div id="joinRoomScreen" class="room-screen" style="display: none;">
+            <h2>Join Existing Room</h2>
+            <div class="input-group">
+                <label for="joinNickname">Enter your nickname:</label>
+                <input type="text" id="joinNickname" placeholder="Your nickname" maxlength="20">
+            </div>
+            <div class="input-group">
+                <label for="roomCode">Enter room code:</label>
+                <input type="text" id="roomCode" placeholder="Room code (e.g., ABC123)" maxlength="6" style="text-transform: uppercase;">
+            </div>
+            <div class="button-group">
+                <button onclick="joinRoom()">Join Room</button>
+                <button onclick="showWelcome()">Back</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="game-screen">
+            <div class="room-info">
+                <h3>Room: <span id="currentRoomCode" class="room-code"></span></h3>
+                <p>Share this code with friends to join your game!</p>
+            </div>
+            
+            <div class="main-content">
+                <!-- Game Section -->
+                <div class="game-section">
+                    <h2>🎮 Make Your Guess</h2>
+                    <div class="input-group">
+                        <label for="guessInput">Guess a number (1-100):</label>
+                        <input type="number" id="guessInput" min="1" max="100" placeholder="Enter your guess">
+                    </div>
+                    <button onclick="submitGuess()">Submit Guess</button>
+                    <div id="feedback" class="feedback info">
+                        Welcome! Guess a number between 1-100
+                    </div>
+                </div>
+
+                <!-- Chat Section -->
+                <div class="chat-section">
+                    <h2>💬 Chat</h2>
+                    <div id="chatMessages" class="chat-messages"></div>
+                    <div class="input-group">
+                        <input type="text" id="chatInput" placeholder="Type your message..." maxlength="100">
+                    </div>
+                    <button onclick="sendChat()">Send Message</button>
+                </div>
+
+                <!-- Players Section -->
+                <div class="players-section">
+                    <h2>👥 Players</h2>
+                    <div id="playersList" class="players-list"></div>
+                </div>
+            </div>
+            
+            <div class="button-group" style="margin-top: 20px;">
+                <button onclick="leaveRoom()">Leave Room</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // Connect to Socket.IO server
+        const socket = io();
+        let currentRoom = null;
+        let currentNickname = null;
+
+        // Screen navigation functions
+        function showWelcome() {
+            document.getElementById('welcomeScreen').style.display = 'block';
+            document.getElementById('createRoomScreen').style.display = 'none';
+            document.getElementById('joinRoomScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'none';
+        }
+
+        function showCreateRoom() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('createRoomScreen').style.display = 'block';
+            document.getElementById('joinRoomScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'none';
+        }
+
+        function showJoinRoom() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('createRoomScreen').style.display = 'none';
+            document.getElementById('joinRoomScreen').style.display = 'block';
+            document.getElementById('gameScreen').style.display = 'none';
+        }
+
+        function showGame() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('createRoomScreen').style.display = 'none';
+            document.getElementById('joinRoomScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+        }
+
+        // Create room function
+        async function createRoom() {
+            const nickname = document.getElementById('createNickname').value.trim();
+            if (!nickname) {
+                alert('Please enter a nickname!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/rooms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentRoom = data.room_code;
+                    currentNickname = nickname;
+                    document.getElementById('currentRoomCode').textContent = currentRoom;
+                    
+                    socket.emit('join_room', { 
+                        room_code: currentRoom, 
+                        nickname: nickname 
+                    });
+                    
+                    showGame();
+                } else {
+                    alert('Failed to create room: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error creating room: ' + error.message);
+            }
+        }
+
+        // Join room function
+        function joinRoom() {
+            const nickname = document.getElementById('joinNickname').value.trim();
+            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+            
+            if (!nickname) {
+                alert('Please enter a nickname!');
+                return;
+            }
+            
+            if (!roomCode) {
+                alert('Please enter a room code!');
+                return;
+            }
+
+            currentRoom = roomCode;
+            currentNickname = nickname;
+            document.getElementById('currentRoomCode').textContent = currentRoom;
+            
+            socket.emit('join_room', { 
+                room_code: roomCode, 
+                nickname: nickname 
+            });
+            
+            showGame();
+        }
+
+        // Leave room function
+        function leaveRoom() {
+            if (currentRoom) {
+                // Leave the specific room
+                socket.emit('leave_room', { room_code: currentRoom });
+                currentRoom = null;
+                currentNickname = null;
+                showWelcome();
+            }
+        }
+
+        // Submit guess function
+        function submitGuess() {
+            if (!currentRoom) return;
+            
+            const guess = document.getElementById('guessInput').value;
+            if (!guess) {
+                alert('Please enter a guess!');
+                return;
+            }
+
+            socket.emit('guess', { 
+                room_code: currentRoom,
+                guess: parseInt(guess) 
+            });
+            document.getElementById('guessInput').value = '';
+        }
+
+        // Send chat message function
+        function sendChat() {
+            if (!currentRoom) return;
+            
+            const message = document.getElementById('chatInput').value.trim();
+            if (!message) return;
+
+            socket.emit('chat', { 
+                room_code: currentRoom,
+                message: message 
+            });
+            document.getElementById('chatInput').value = '';
+        }
+
+        // Handle Enter key for inputs
+        document.getElementById('createNickname').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') createRoom();
+        });
+
+        document.getElementById('joinNickname').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') joinRoom();
+        });
+
+        document.getElementById('roomCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') joinRoom();
+        });
+
+        document.getElementById('guessInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') submitGuess();
+        });
+
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendChat();
+        });
+
+        // Socket.IO event handlers
+        socket.on('joined_room', function(data) {
+            updatePlayersList(data.players);
+            addChatMessage('System', `${data.nickname} joined the room!`);
+        });
+
+        socket.on('player_left', function(data) {
+            updatePlayersList(data.players);
+        });
+
+        socket.on('feedback', function(data) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = data.message;
+            feedback.className = 'feedback ' + (data.correct ? 'correct' : 'info');
+        });
+
+        socket.on('game_reset', function(data) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = data.message;
+            feedback.className = 'feedback info';
+            updatePlayersList(data.players);
+            addChatMessage('System', 'New round started!');
+        });
+
+        socket.on('chat_message', function(data) {
+            addChatMessage(data.nickname, data.message);
+        });
+
+        socket.on('error', function(data) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = data.message;
+            feedback.className = 'feedback error';
+        });
+
+        // Helper functions
+        function updatePlayersList(players) {
+            const playersList = document.getElementById('playersList');
+            playersList.innerHTML = '';
+            
+            players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card';
+                playerCard.innerHTML = `
+                    <div class="player-name">${player.nickname}</div>
+                    <div class="player-score">${player.score} points</div>
+                `;
+                playersList.appendChild(playerCard);
+            });
+        }
+
+        function addChatMessage(nickname, message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            
+            // Use different styling for system messages
+            const nicknameClass = nickname === 'System' ? 'system-nickname' : 'nickname';
+            messageDiv.innerHTML = `<span class="${nicknameClass}">${nickname}:</span> ${message}`;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html> 
