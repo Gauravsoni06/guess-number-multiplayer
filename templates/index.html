@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guess the Number - Multiplayer</title>
+    <title>Multiplayer Game Hub</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         * {
             margin: 0;
@@ -12,542 +13,1041 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            color: #333;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            overflow: hidden;
+            padding: 20px;
         }
 
         .header {
-            background: #333;
+            text-align: center;
+            margin-bottom: 30px;
             color: white;
-            padding: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .screen {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .game-selection {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .game-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .game-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
             text-align: center;
         }
 
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 20px;
+        .game-card:hover {
+            transform: translateY(-5px);
         }
 
-        .game-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        .chat-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        .players-section {
-            grid-column: 1 / -1;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        h2 {
+        .game-icon {
+            font-size: 3em;
             margin-bottom: 15px;
-            color: #333;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .input-group {
             margin-bottom: 15px;
         }
 
-        label {
+        .input-group label {
             display: block;
             margin-bottom: 5px;
-            font-weight: bold;
+            font-weight: 600;
         }
 
-        input {
+        .input-group input, .input-group select {
             width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
             font-size: 16px;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-
-        button:hover {
-            background: #5a6fd8;
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .feedback {
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .feedback.correct {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .feedback.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .feedback.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .chat-messages {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-
-        .chat-message {
-            margin-bottom: 8px;
-            padding: 5px;
-            border-radius: 3px;
-        }
-
-        .chat-message .nickname {
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .chat-message .system-nickname {
-            font-weight: bold;
-            color: #dc3545;
-            font-style: italic;
-        }
-
-        .players-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-        }
-
-        .player-card {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            text-align: center;
-        }
-
-        .player-name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .player-score {
-            color: #667eea;
-            font-size: 18px;
-        }
-
-        .welcome-screen {
-            text-align: center;
-            padding: 50px 20px;
-        }
-
-        .room-screen {
-            text-align: center;
-            padding: 50px 20px;
-        }
-
-        .game-screen {
-            display: none;
         }
 
         .room-info {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 5px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
             margin-bottom: 20px;
             text-align: center;
         }
 
         .room-code {
-            font-size: 24px;
+            font-size: 2em;
             font-weight: bold;
-            color: #667eea;
             margin: 10px 0;
         }
 
-        .button-group {
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .game-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .game-section h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .chat-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .chat-message.system {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .feedback {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .feedback.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .admin-controls {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .player-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4facfe;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-score {
+            background: #4facfe;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        /* Street Food Game Styles */
+        .street-food-game {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .food-description {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .food-image {
+            width: 100%;
+            max-width: 400px;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .food-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 10px;
-            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .food-option {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .food-option:hover {
+            border-color: #4facfe;
+            background: #f8f9ff;
+        }
+
+        .food-option.selected {
+            border-color: #28a745;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .round-info {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .timer {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin: 10px 0;
         }
 
         @media (max-width: 768px) {
-            .main-content {
+            .game-area {
                 grid-template-columns: 1fr;
             }
-            .button-group {
-                flex-direction: column;
-                align-items: center;
+            
+            .game-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .food-options {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
-            <h1>🎯 Guess the Number - Multiplayer</h1>
+            <h1>🎮 Multiplayer Game Hub</h1>
+            <p>Choose your game and start playing with friends!</p>
         </div>
 
-        <!-- Welcome Screen -->
-        <div id="welcomeScreen" class="welcome-screen">
-            <h2>Welcome to Guess the Number!</h2>
-            <p>Create a new room or join an existing one to start playing.</p>
-            <div class="button-group">
-                <button onclick="showCreateRoom()">Create New Room</button>
-                <button onclick="showJoinRoom()">Join Existing Room</button>
-            </div>
-        </div>
-
-        <!-- Create Room Screen -->
-        <div id="createRoomScreen" class="room-screen" style="display: none;">
-            <h2>Create New Room</h2>
-            <div class="input-group">
-                <label for="createNickname">Enter your nickname:</label>
-                <input type="text" id="createNickname" placeholder="Your nickname" maxlength="20">
-            </div>
-            <div class="button-group">
-                <button onclick="createRoom()">Create Room</button>
-                <button onclick="showWelcome()">Back</button>
+        <!-- Game Selection Screen -->
+        <div id="gameSelectionScreen" class="screen active">
+            <div class="game-selection">
+                <h2>Choose Your Game</h2>
+                <div class="game-cards">
+                    <div class="game-card" onclick="selectGame('number_guess')">
+                        <div class="game-icon">🎯</div>
+                        <h3>Guess the Number</h3>
+                        <p>Classic number guessing game! Guess the number between 1-100.</p>
+                    </div>
+                    <div class="game-card" onclick="selectGame('street_food')">
+                        <div class="game-icon">🍽️</div>
+                        <h3>Street Food Showdown</h3>
+                        <p>Test your knowledge of Indian street food with descriptions and hints!</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Join Room Screen -->
-        <div id="joinRoomScreen" class="room-screen" style="display: none;">
-            <h2>Join Existing Room</h2>
-            <div class="input-group">
-                <label for="joinNickname">Enter your nickname:</label>
-                <input type="text" id="joinNickname" placeholder="Your nickname" maxlength="20">
-            </div>
-            <div class="input-group">
-                <label for="roomCode">Enter room code:</label>
-                <input type="text" id="roomCode" placeholder="Room code (e.g., ABC123)" maxlength="6" style="text-transform: uppercase;">
-            </div>
-            <div class="button-group">
-                <button onclick="joinRoom()">Join Room</button>
-                <button onclick="showWelcome()">Back</button>
-            </div>
-        </div>
-
-        <!-- Game Screen -->
-        <div id="gameScreen" class="game-screen">
+        <!-- Room Creation Screen -->
+        <div id="roomCreationScreen" class="screen">
             <div class="room-info">
-                <h3>Room: <span id="currentRoomCode" class="room-code"></span></h3>
+                <h2>Create a New Room</h2>
+                <p>Share the room code with your friends!</p>
+            </div>
+            
+            <div class="input-group">
+                <label for="nicknameInput">Your Nickname:</label>
+                <input type="text" id="nicknameInput" placeholder="Enter your nickname" maxlength="20">
+            </div>
+            
+            <button class="btn" onclick="createRoom()">Create Room</button>
+            <button class="btn" onclick="showJoinScreen()">Join Existing Room</button>
+        </div>
+
+        <!-- Room Joining Screen -->
+        <div id="roomJoiningScreen" class="screen">
+            <div class="room-info">
+                <h2>Join a Room</h2>
+                <p>Enter the room code provided by your friend!</p>
+            </div>
+            
+            <div class="input-group">
+                <label for="joinNicknameInput">Your Nickname:</label>
+                <input type="text" id="joinNicknameInput" placeholder="Enter your nickname" maxlength="20">
+            </div>
+            
+            <div class="input-group">
+                <label for="roomCodeInput">Room Code:</label>
+                <input type="text" id="roomCodeInput" placeholder="Enter 6-digit room code" maxlength="6" style="text-transform: uppercase;">
+            </div>
+            
+            <button class="btn" onclick="joinRoom()">Join Room</button>
+            <button class="btn" onclick="showCreateScreen()">Create New Room</button>
+        </div>
+
+        <!-- Game Lobby Screen -->
+        <div id="gameLobbyScreen" class="screen">
+            <div class="room-info">
+                <h2>Game Lobby</h2>
+                <div class="room-code" id="lobbyRoomCode"></div>
                 <p>Share this code with friends to join your game!</p>
             </div>
-            
-            <div class="main-content">
-                <!-- Game Section -->
+
+            <div id="gameSelectionLobby" style="display: none;">
+                <h3>Select Game Type</h3>
+                <div class="input-group">
+                    <label for="gameTypeSelect">Choose Game:</label>
+                    <select id="gameTypeSelect">
+                        <option value="">Select a game...</option>
+                        <option value="number_guess">🎯 Guess the Number</option>
+                        <option value="street_food">🍽️ Street Food Showdown</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="selectGameType()">Select Game</button>
+            </div>
+
+            <div id="adminControls" class="admin-controls">
+                <h3>👑 Admin Controls</h3>
+                <div id="adminStatus">You are the admin! Select a game type and start playing.</div>
+                <button class="btn" id="startRoundBtn" onclick="startRound()" disabled>Start Round</button>
+            </div>
+
+            <div class="game-area">
                 <div class="game-section">
-                    <h2>🎮 Make Your Guess</h2>
+                    <h3>👥 Players</h3>
+                    <div id="playersList"></div>
+                </div>
+                
+                <div class="chat-section">
+                    <h3>💬 Chat</h3>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="input-group">
+                        <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="if(event.key === 'Enter') sendChat()">
+                    </div>
+                    <button class="btn" onclick="sendChat()">Send Message</button>
+                </div>
+            </div>
+
+            <button class="btn" onclick="leaveRoom()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">Leave Room</button>
+        </div>
+
+        <!-- Number Guessing Game Screen -->
+        <div id="numberGameScreen" class="screen">
+            <div class="room-info">
+                <h2>🎯 Guess the Number</h2>
+                <div class="room-code" id="numberGameRoomCode"></div>
+            </div>
+
+            <div class="game-area">
+                <div class="game-section">
+                    <h3>🎯 Make Your Guess</h3>
                     <div class="input-group">
                         <label for="guessInput">Guess a number (1-100):</label>
-                        <input type="number" id="guessInput" min="1" max="100" placeholder="Enter your guess">
+                        <input type="number" id="guessInput" placeholder="Enter your guess" min="1" max="100" disabled>
                     </div>
-                    <button onclick="submitGuess()">Submit Guess</button>
-                    <div id="feedback" class="feedback info">
-                        Welcome! Guess a number between 1-100
-                    </div>
+                    <button class="btn" onclick="submitGuess()" id="submitGuessBtn" disabled>Submit Guess</button>
+                    <div class="feedback" id="feedback">Welcome! Wait for admin to start the round.</div>
+                </div>
+                
+                <div class="game-section">
+                    <h3>👥 Players & Scores</h3>
+                    <div id="numberGamePlayersList"></div>
+                </div>
+            </div>
+
+            <div id="numberGameAdminControls" class="admin-controls">
+                <h3>👑 Admin Controls</h3>
+                <div id="numberGameAdminStatus">You are the admin! Start a new round when ready.</div>
+                <button class="btn" id="numberGameStartBtn" onclick="startNumberRound()">Start Round</button>
+            </div>
+
+            <button class="btn" onclick="backToLobby()">Back to Lobby</button>
+        </div>
+
+        <!-- Street Food Game Screen -->
+        <div id="streetFoodScreen" class="screen">
+            <div class="room-info">
+                <h2>🍽️ Street Food Showdown</h2>
+                <div class="room-code" id="streetFoodRoomCode"></div>
+            </div>
+
+            <div class="street-food-game">
+                <div class="round-info" id="roundInfo">
+                    <div style="font-size: 1.2em; font-weight: bold; color: #4facfe;">Round 1 of 5</div>
+                    <div style="background: #ff6b6b; color: white; padding: 5px 15px; border-radius: 20px; margin: 10px 0; display: inline-block;">Normal Round</div>
+                    <div class="timer" id="timer">30s</div>
                 </div>
 
-                <!-- Chat Section -->
+                <div class="food-description" id="foodDescription">
+                    Waiting for round to start...
+                </div>
+
+                <img class="food-image" id="foodImage" style="display: none;" alt="Food hint">
+
+                <div class="food-options" id="foodOptions">
+                    <!-- Options will be populated here -->
+                </div>
+
+                <div class="feedback" id="streetFoodFeedback">Welcome to Street Food Showdown! Wait for admin to start the round.</div>
+            </div>
+
+            <div class="game-area">
+                <div class="game-section">
+                    <h3>👥 Players & Scores</h3>
+                    <div id="streetFoodPlayersList"></div>
+                </div>
+                
                 <div class="chat-section">
-                    <h2>💬 Chat</h2>
-                    <div id="chatMessages" class="chat-messages"></div>
+                    <h3>💬 Chat</h3>
+                    <div class="chat-messages" id="streetFoodChatMessages"></div>
                     <div class="input-group">
-                        <input type="text" id="chatInput" placeholder="Type your message..." maxlength="100">
+                        <input type="text" id="streetFoodChatInput" placeholder="Type your message..." onkeypress="if(event.key === 'Enter') sendStreetFoodChat()">
                     </div>
-                    <button onclick="sendChat()">Send Message</button>
+                    <button class="btn" onclick="sendStreetFoodChat()">Send Message</button>
                 </div>
+            </div>
 
-                <!-- Players Section -->
-                <div class="players-section">
-                    <h2>👥 Players</h2>
-                    <div id="playersList" class="players-list"></div>
-                </div>
+            <div id="streetFoodAdminControls" class="admin-controls">
+                <h3>👑 Admin Controls</h3>
+                <div id="streetFoodAdminStatus">You are the admin! Start the first round when ready.</div>
+                <button class="btn" id="streetFoodStartBtn" onclick="startStreetFoodRound()">Start Round</button>
             </div>
-            
-            <div class="button-group" style="margin-top: 20px;">
-                <button onclick="leaveRoom()">Leave Room</button>
-            </div>
+
+            <button class="btn" onclick="backToLobby()">Back to Lobby</button>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
-        // Connect to Socket.IO server
-        const socket = io();
-        let currentRoom = null;
-        let currentNickname = null;
+        // Global variables
+        let socket;
+        let currentRoom = '';
+        let currentNickname = '';
+        let isAdmin = false;
+        let currentGameType = '';
+        let selectedFoodOption = null;
+        let roundTimer = null;
+
+        // Initialize Socket.IO connection
+        function initSocket() {
+            socket = io();
+            
+            socket.on('connect', function() {
+                console.log('Connected to server');
+            });
+
+            socket.on('joined_room', function(data) {
+                console.log('Joined room data:', data);
+                currentRoom = data.room_code;
+                currentNickname = data.nickname;
+                isAdmin = data.is_admin;
+                currentGameType = data.game_type;
+                
+                updatePlayersList(data.players);
+                addChatMessage('System', `${data.nickname} joined the room!`);
+                
+                showGameLobby();
+                
+                if (isAdmin) {
+                    document.getElementById('gameSelectionLobby').style.display = 'block';
+                    document.getElementById('adminControls').style.display = 'block';
+                    addChatMessage('System', '👑 You are the admin! You can select a game and start rounds.');
+                } else {
+                    document.getElementById('gameSelectionLobby').style.display = 'none';
+                    document.getElementById('adminControls').style.display = 'none';
+                }
+            });
+
+            socket.on('player_joined', function(data) {
+                console.log('Player joined:', data);
+                updatePlayersList(data.players);
+                addChatMessage('System', `${data.nickname} joined the room!`);
+            });
+
+            socket.on('player_left', function(data) {
+                updatePlayersList(data.players);
+            });
+
+            socket.on('game_selected', function(data) {
+                currentGameType = data.game_type;
+                addChatMessage('System', data.message);
+                
+                if (isAdmin) {
+                    document.getElementById('startRoundBtn').disabled = false;
+                    document.getElementById('adminStatus').textContent = `Game selected: ${data.game_type.replace('_', ' ').toUpperCase()}. Click "Start Round" to begin!`;
+                }
+            });
+
+            socket.on('round_started', function(data) {
+                if (currentGameType === 'number_guess') {
+                    showNumberGame();
+                    document.getElementById('feedback').textContent = data.message;
+                    document.getElementById('feedback').className = 'feedback info';
+                    document.getElementById('guessInput').disabled = false;
+                    document.getElementById('submitGuessBtn').disabled = false;
+                    updatePlayersList(data.players);
+                }
+            });
+
+            socket.on('street_food_round_started', function(data) {
+                showStreetFoodGame();
+                startStreetFoodRoundUI(data);
+            });
+
+            socket.on('image_revealed', function(data) {
+                const foodImage = document.getElementById('foodImage');
+                foodImage.src = data.image_url;
+                foodImage.style.display = 'block';
+                addChatMessage('System', data.message);
+            });
+
+            socket.on('street_food_round_ended', function(data) {
+                endStreetFoodRound(data);
+            });
+
+            socket.on('street_food_game_ended', function(data) {
+                endStreetFoodGame(data);
+            });
+
+            socket.on('feedback', function(data) {
+                const feedbackElement = currentGameType === 'number_guess' ? 
+                    document.getElementById('feedback') : 
+                    document.getElementById('streetFoodFeedback');
+                
+                feedbackElement.textContent = data.message;
+                feedbackElement.className = 'feedback ' + (data.correct ? 'correct' : 'info');
+            });
+
+            socket.on('round_ended', function(data) {
+                if (currentGameType === 'number_guess') {
+                    document.getElementById('feedback').textContent = data.message;
+                    document.getElementById('feedback').className = 'feedback correct';
+                    document.getElementById('guessInput').disabled = true;
+                    document.getElementById('submitGuessBtn').disabled = true;
+                    updatePlayersList(data.players);
+                    
+                    if (isAdmin) {
+                        document.getElementById('numberGameStartBtn').disabled = false;
+                        document.getElementById('numberGameAdminStatus').textContent = 'Round ended! Click "Start Round" to begin a new round.';
+                    }
+                }
+            });
+
+            socket.on('admin_transferred', function(data) {
+                updatePlayersList(data.players);
+                addChatMessage('System', `👑 ${data.new_admin} is now the admin`);
+                
+                if (data.new_admin === currentNickname) {
+                    isAdmin = true;
+                    document.getElementById('adminControls').style.display = 'block';
+                    document.getElementById('gameSelectionLobby').style.display = 'block';
+                    addChatMessage('System', '👑 You are now the admin! You can select a game and start rounds.');
+                }
+            });
+
+            socket.on('chat_message', function(data) {
+                addChatMessage(data.nickname, data.message);
+            });
+
+            socket.on('error', function(data) {
+                alert(data.message);
+            });
+        }
 
         // Screen navigation functions
-        function showWelcome() {
-            document.getElementById('welcomeScreen').style.display = 'block';
-            document.getElementById('createRoomScreen').style.display = 'none';
-            document.getElementById('joinRoomScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'none';
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
         }
 
-        function showCreateRoom() {
-            document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('createRoomScreen').style.display = 'block';
-            document.getElementById('joinRoomScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'none';
+        function selectGame(gameType) {
+            currentGameType = gameType;
+            showCreateScreen();
         }
 
-        function showJoinRoom() {
-            document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('createRoomScreen').style.display = 'none';
-            document.getElementById('joinRoomScreen').style.display = 'block';
-            document.getElementById('gameScreen').style.display = 'none';
+        function showCreateScreen() {
+            showScreen('roomCreationScreen');
         }
 
-        function showGame() {
-            document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('createRoomScreen').style.display = 'none';
-            document.getElementById('joinRoomScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
+        function showJoinScreen() {
+            showScreen('roomJoiningScreen');
         }
 
-        // Create room function
-        async function createRoom() {
-            const nickname = document.getElementById('createNickname').value.trim();
+        function showGameLobby() {
+            showScreen('gameLobbyScreen');
+            document.getElementById('lobbyRoomCode').textContent = currentRoom;
+        }
+
+        function showNumberGame() {
+            showScreen('numberGameScreen');
+            document.getElementById('numberGameRoomCode').textContent = currentRoom;
+            updatePlayersListForGame('numberGamePlayersList');
+            
+            if (isAdmin) {
+                document.getElementById('numberGameAdminControls').style.display = 'block';
+            }
+        }
+
+        function showStreetFoodGame() {
+            showScreen('streetFoodScreen');
+            document.getElementById('streetFoodRoomCode').textContent = currentRoom;
+            updatePlayersListForGame('streetFoodPlayersList');
+            
+            if (isAdmin) {
+                document.getElementById('streetFoodAdminControls').style.display = 'block';
+            }
+        }
+
+        // Room management functions
+        function createRoom() {
+            const nickname = document.getElementById('nicknameInput').value.trim();
             if (!nickname) {
                 alert('Please enter a nickname!');
                 return;
             }
-
-            try {
-                const response = await fetch('/api/rooms', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+            
+            fetch('/api/rooms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                currentRoom = data.room_code;
+                currentNickname = nickname;
+                socket.emit('join_room', {
+                    room_code: currentRoom,
+                    nickname: nickname
                 });
-                const data = await response.json();
-                
-                if (data.success) {
-                    currentRoom = data.room_code;
-                    currentNickname = nickname;
-                    document.getElementById('currentRoomCode').textContent = currentRoom;
-                    
-                    socket.emit('join_room', { 
-                        room_code: currentRoom, 
-                        nickname: nickname 
-                    });
-                    
-                    showGame();
-                } else {
-                    alert('Failed to create room: ' + data.error);
-                }
-            } catch (error) {
-                alert('Error creating room: ' + error.message);
-            }
+            })
+            .catch(error => {
+                console.error('Error creating room:', error);
+                alert('Failed to create room. Please try again.');
+            });
         }
 
-        // Join room function
         function joinRoom() {
-            const nickname = document.getElementById('joinNickname').value.trim();
-            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+            const nickname = document.getElementById('joinNicknameInput').value.trim();
+            const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
             
-            if (!nickname) {
-                alert('Please enter a nickname!');
+            if (!nickname || !roomCode) {
+                alert('Please enter both nickname and room code!');
                 return;
             }
             
-            if (!roomCode) {
-                alert('Please enter a room code!');
-                return;
-            }
-
             currentRoom = roomCode;
             currentNickname = nickname;
-            document.getElementById('currentRoomCode').textContent = currentRoom;
-            
-            socket.emit('join_room', { 
-                room_code: roomCode, 
-                nickname: nickname 
+            socket.emit('join_room', {
+                room_code: roomCode,
+                nickname: nickname
             });
-            
-            showGame();
         }
 
-        // Leave room function
         function leaveRoom() {
             if (currentRoom) {
-                // Leave the specific room
                 socket.emit('leave_room', { room_code: currentRoom });
-                currentRoom = null;
-                currentNickname = null;
-                showWelcome();
             }
+            showGameSelection();
         }
 
-        // Submit guess function
-        function submitGuess() {
-            if (!currentRoom) return;
+        function backToLobby() {
+            showGameLobby();
+        }
+
+        function showGameSelection() {
+            showScreen('gameSelectionScreen');
+            currentRoom = '';
+            currentNickname = '';
+            isAdmin = false;
+            currentGameType = '';
+        }
+
+        // Game control functions
+        function selectGameType() {
+            const gameType = document.getElementById('gameTypeSelect').value;
+            if (!gameType) {
+                alert('Please select a game type!');
+                return;
+            }
             
+            socket.emit('select_game', {
+                room_code: currentRoom,
+                game_type: gameType
+            });
+        }
+
+        function startRound() {
+            socket.emit('start_round', { room_code: currentRoom });
+        }
+
+        function startNumberRound() {
+            socket.emit('start_round', { room_code: currentRoom });
+        }
+
+        function startStreetFoodRound() {
+            socket.emit('start_round', { room_code: currentRoom });
+        }
+
+        // Number guessing game functions
+        function submitGuess() {
             const guess = document.getElementById('guessInput').value;
             if (!guess) {
                 alert('Please enter a guess!');
                 return;
             }
-
-            socket.emit('guess', { 
+            
+            socket.emit('guess', {
                 room_code: currentRoom,
-                guess: parseInt(guess) 
+                guess: parseInt(guess)
             });
+            
             document.getElementById('guessInput').value = '';
         }
 
-        // Send chat message function
-        function sendChat() {
-            if (!currentRoom) return;
+        // Street food game functions
+        function startStreetFoodRoundUI(data) {
+            const roundInfo = document.getElementById('roundInfo');
+            const description = document.getElementById('foodDescription');
+            const options = document.getElementById('foodOptions');
+            const image = document.getElementById('foodImage');
             
-            const message = document.getElementById('chatInput').value.trim();
-            if (!message) return;
-
-            socket.emit('chat', { 
-                room_code: currentRoom,
-                message: message 
+            // Update round info
+            roundInfo.innerHTML = `
+                <div style="font-size: 1.2em; font-weight: bold; color: #4facfe;">Round ${data.round_number} of ${data.max_rounds}</div>
+                <div style="background: #ff6b6b; color: white; padding: 5px 15px; border-radius: 20px; margin: 10px 0; display: inline-block;">${data.round_type.charAt(0).toUpperCase() + data.round_type.slice(1)} Round</div>
+                <div class="timer" id="timer">${data.duration}s</div>
+            `;
+            
+            // Update description
+            if (data.description) {
+                description.textContent = data.description;
+            }
+            
+            // Update options
+            options.innerHTML = '';
+            data.options.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'food-option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectFoodOption(option, optionDiv);
+                options.appendChild(optionDiv);
             });
-            document.getElementById('chatInput').value = '';
+            
+            // Hide image initially
+            image.style.display = 'none';
+            
+            // Start timer
+            startTimer(data.duration);
+            
+            // Update feedback
+            document.getElementById('streetFoodFeedback').textContent = 'Round started! Choose your answer.';
+            document.getElementById('streetFoodFeedback').className = 'feedback info';
+            
+            // Disable admin start button
+            if (isAdmin) {
+                document.getElementById('streetFoodStartBtn').disabled = true;
+                document.getElementById('streetFoodAdminStatus').textContent = 'Round in progress...';
+            }
         }
 
-        // Handle Enter key for inputs
-        document.getElementById('createNickname').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') createRoom();
-        });
+        function selectFoodOption(option, element) {
+            // Remove previous selection
+            document.querySelectorAll('.food-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Select new option
+            element.classList.add('selected');
+            selectedFoodOption = option;
+            
+            // Submit answer
+            socket.emit('guess', {
+                room_code: currentRoom,
+                answer: option
+            });
+        }
 
-        document.getElementById('joinNickname').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') joinRoom();
-        });
+        function startTimer(duration) {
+            let timeLeft = duration;
+            const timerElement = document.getElementById('timer');
+            
+            roundTimer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft + 's';
+                
+                if (timeLeft <= 0) {
+                    clearInterval(roundTimer);
+                    timerElement.textContent = 'Time\'s up!';
+                }
+            }, 1000);
+        }
 
-        document.getElementById('roomCode').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') joinRoom();
-        });
+        function endStreetFoodRound(data) {
+            clearInterval(roundTimer);
+            
+            // Show results
+            const resultsSection = document.createElement('div');
+            resultsSection.style.background = 'white';
+            resultsSection.style.padding = '20px';
+            resultsSection.style.borderRadius = '10px';
+            resultsSection.style.margin = '20px 0';
+            resultsSection.innerHTML = `
+                <h3>Round ${data.round_number} Results</h3>
+                <p><strong>Correct Answer:</strong> ${data.correct_answer}</p>
+            `;
+            
+            data.results.forEach(result => {
+                const resultDiv = document.createElement('div');
+                resultDiv.style.display = 'flex';
+                resultDiv.style.justifyContent = 'space-between';
+                resultDiv.style.alignItems = 'center';
+                resultDiv.style.padding = '10px';
+                resultDiv.style.borderBottom = '1px solid #dee2e6';
+                resultDiv.style.background = result.correct ? '#d4edda' : '#f8d7da';
+                resultDiv.style.borderLeft = `4px solid ${result.correct ? '#28a745' : '#dc3545'}`;
+                resultDiv.innerHTML = `
+                    <span>${result.nickname}: ${result.answer}</span>
+                    <span>${result.correct ? '✅' : '❌'} (${result.score} pts)</span>
+                `;
+                resultsSection.appendChild(resultDiv);
+            });
+            
+            document.getElementById('streetFoodScreen').insertBefore(resultsSection, document.getElementById('streetFoodScreen').lastElementChild);
+            
+            // Update players list
+            updatePlayersListForGame('streetFoodPlayersList');
+            
+            // Enable admin start button for next round
+            if (isAdmin) {
+                document.getElementById('streetFoodStartBtn').disabled = false;
+                document.getElementById('streetFoodAdminStatus').textContent = `Round ${data.round_number} complete! Start round ${data.round_number + 1}.`;
+            }
+            
+            // Clear options
+            document.getElementById('foodOptions').innerHTML = '';
+            document.getElementById('foodDescription').textContent = 'Round complete!';
+            document.getElementById('foodImage').style.display = 'none';
+        }
 
-        document.getElementById('guessInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') submitGuess();
-        });
+        function endStreetFoodGame(data) {
+            clearInterval(roundTimer);
+            
+            const resultsSection = document.createElement('div');
+            resultsSection.style.background = 'white';
+            resultsSection.style.padding = '20px';
+            resultsSection.style.borderRadius = '10px';
+            resultsSection.style.margin = '20px 0';
+            resultsSection.innerHTML = `
+                <h3>🏆 Game Over!</h3>
+                <p><strong>Winner:</strong> ${data.winner}</p>
+            `;
+            
+            data.final_results.forEach((result, index) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.style.display = 'flex';
+                resultDiv.style.justifyContent = 'space-between';
+                resultDiv.style.alignItems = 'center';
+                resultDiv.style.padding = '10px';
+                resultDiv.style.borderBottom = '1px solid #dee2e6';
+                resultDiv.innerHTML = `
+                    <span>${index + 1}. ${result.nickname}</span>
+                    <span>${result.score} points</span>
+                `;
+                resultsSection.appendChild(resultDiv);
+            });
+            
+            document.getElementById('streetFoodScreen').insertBefore(resultsSection, document.getElementById('streetFoodScreen').lastElementChild);
+            
+            // Reset game
+            if (isAdmin) {
+                document.getElementById('streetFoodStartBtn').disabled = false;
+                document.getElementById('streetFoodAdminStatus').textContent = 'Game complete! Start a new game.';
+            }
+        }
 
-        document.getElementById('chatInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendChat();
-        });
+        // Chat functions
+        function sendChat() {
+            const message = document.getElementById('chatInput').value.trim();
+            if (message && currentRoom) {
+                socket.emit('chat', {
+                    room_code: currentRoom,
+                    message: message
+                });
+                document.getElementById('chatInput').value = '';
+            }
+        }
 
-        // Socket.IO event handlers
-        socket.on('joined_room', function(data) {
-            updatePlayersList(data.players);
-            addChatMessage('System', `${data.nickname} joined the room!`);
-        });
+        function sendStreetFoodChat() {
+            const message = document.getElementById('streetFoodChatInput').value.trim();
+            if (message && currentRoom) {
+                socket.emit('chat', {
+                    room_code: currentRoom,
+                    message: message
+                });
+                document.getElementById('streetFoodChatInput').value = '';
+            }
+        }
 
-        socket.on('player_left', function(data) {
-            updatePlayersList(data.players);
-        });
+        function addChatMessage(nickname, message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const streetFoodChatMessages = document.getElementById('streetFoodChatMessages');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${nickname === 'System' ? 'system' : ''}`;
+            messageDiv.innerHTML = `<strong>${nickname}:</strong> ${message}`;
+            
+            if (chatMessages) chatMessages.appendChild(messageDiv);
+            if (streetFoodChatMessages) streetFoodChatMessages.appendChild(messageDiv);
+            
+            // Auto-scroll to bottom
+            if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+            if (streetFoodChatMessages) streetFoodChatMessages.scrollTop = streetFoodChatMessages.scrollHeight;
+        }
 
-        socket.on('feedback', function(data) {
-            const feedback = document.getElementById('feedback');
-            feedback.textContent = data.message;
-            feedback.className = 'feedback ' + (data.correct ? 'correct' : 'info');
-        });
-
-        socket.on('game_reset', function(data) {
-            const feedback = document.getElementById('feedback');
-            feedback.textContent = data.message;
-            feedback.className = 'feedback info';
-            updatePlayersList(data.players);
-            addChatMessage('System', 'New round started!');
-        });
-
-        socket.on('chat_message', function(data) {
-            addChatMessage(data.nickname, data.message);
-        });
-
-        socket.on('error', function(data) {
-            const feedback = document.getElementById('feedback');
-            feedback.textContent = data.message;
-            feedback.className = 'feedback error';
-        });
-
-        // Helper functions
+        // Player list functions
         function updatePlayersList(players) {
             const playersList = document.getElementById('playersList');
-            playersList.innerHTML = '';
+            if (!playersList) return;
             
+            playersList.innerHTML = '';
             players.forEach(player => {
                 const playerCard = document.createElement('div');
                 playerCard.className = 'player-card';
                 playerCard.innerHTML = `
-                    <div class="player-name">${player.nickname}</div>
+                    <div class="player-name">${player.nickname} ${player.nickname === currentNickname ? '(You)' : ''}</div>
                     <div class="player-score">${player.score} points</div>
                 `;
                 playersList.appendChild(playerCard);
             });
         }
 
-        function addChatMessage(nickname, message) {
-            const chatMessages = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'chat-message';
+        function updatePlayersListForGame(gameListId) {
+            const playersList = document.getElementById(gameListId);
+            if (!playersList) return;
             
-            // Use different styling for system messages
-            const nicknameClass = nickname === 'System' ? 'system-nickname' : 'nickname';
-            messageDiv.innerHTML = `<span class="${nicknameClass}">${nickname}:</span> ${message}`;
+            // Get current players from the main lobby list
+            const mainPlayersList = document.getElementById('playersList');
+            if (!mainPlayersList) return;
             
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            playersList.innerHTML = mainPlayersList.innerHTML;
         }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initSocket();
+            
+            // Add event listeners for Enter key
+            document.getElementById('nicknameInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') createRoom();
+            });
+            
+            document.getElementById('joinNicknameInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') joinRoom();
+            });
+            
+            document.getElementById('roomCodeInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') joinRoom();
+            });
+            
+            document.getElementById('guessInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') submitGuess();
+            });
+        });
     </script>
 </body>
 </html> 
