@@ -1,27 +1,8 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-ENV/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Local development
-.env
-.env.local 
+# Python 
+__pycache__/ 
+*.pyc 
+.env 
+.venv/ 
+venv/ 
+.DS_Store 
+Thumbs.db 

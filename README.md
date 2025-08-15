@@ -1,221 +1,226 @@
-# 🎯 Guess the Number - Multiplayer Game
+# 🎮 Multiplayer Game Hub
 
-A minimal AI-powered multiplayer web game where players compete to guess a random number between 1-100 in real-time with room-based gameplay.
+A real-time multiplayer gaming platform featuring multiple games with Socket.IO integration.
 
-## 🎮 Game Features
+## 🎯 **Games Available**
 
-- **Room-based multiplayer gameplay** - Create or join game rooms
-- **Real-time communication** using Socket.IO
-- **Live chat system** for player communication
-- **Player score tracking** with persistent scores during rounds
-- **Automatic game reset** after each correct guess
-- **Responsive design** that works on desktop and mobile
-- **No external dependencies** - runs completely locally
+### 1. **Guess the Number** 🎯
+- Classic number guessing game (1-100)
+- Real-time multiplayer with chat
+- Admin controls for round management
+- Score tracking and leaderboards
 
-## 🛠️ Tech Stack
+### 2. **Street Food Showdown** 🍽️
+- Test your knowledge of Indian street food
+- Multiple choice questions with descriptions
+- Image hints revealed during gameplay
+- Special round types: Normal, Slang, Reverse, Fusion
+- 5 rounds per game with comprehensive scoring
 
-- **Backend**: Python Flask with Socket.IO
-- **Frontend**: Vanilla HTML, CSS, JavaScript
-- **Database**: In-memory storage (Python dictionary)
-- **Real-time Communication**: Socket.IO
-- **Deployment**: Heroku, Render, Railway, or any Python hosting platform
+## 🚀 **Quick Start**
 
-## 📋 Requirements
-
-- Python 3.7+
+### Prerequisites
+- Python 3.8 or higher
 - pip (Python package installer)
 
-## 🚀 Quick Start (Local)
+### Installation
 
-### 1. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Run the Application
-
-```bash
-python app.py
-```
-
-### 3. Open in Browser
-
-Open your web browser and go to:
-```
-http://localhost:5000
-```
-
-## 🎯 How to Play
-
-1. **Welcome Screen**: Choose to create a new room or join an existing one
-2. **Create Room**: Enter your nickname and click "Create Room" to get a room code
-3. **Join Room**: Enter your nickname and the room code shared by a friend
-4. **Make Guesses**: Enter a number between 1-100 and click "Submit Guess"
-5. **Get Feedback**: The server will tell you if your guess is "Too High" or "Too Low"
-6. **Win Points**: First player to guess correctly gets 1 point
-7. **New Round**: Game automatically resets with a new random number
-8. **Chat**: Use the chat box to communicate with other players
-
-## 🧪 Testing Multiplayer
-
-To test with multiple players:
-
-1. **Open multiple browser tabs** to `http://localhost:5000`
-2. **Create a room** in one tab and note the room code
-3. **Join the same room** in other tabs using the room code
-4. **Start guessing** - you'll see real-time updates across all tabs
-5. **Use the chat** to communicate between players
-
-## 🚀 Deployment Options
-
-### Option 1: Heroku (Recommended for beginners)
-
-1. **Install Heroku CLI** and login:
+1. **Clone or download the project**
    ```bash
-   # Install from https://devcenter.heroku.com/articles/heroku-cli
-   heroku login
+   git clone <repository-url>
+   cd multiplayer-game-hub
    ```
 
-2. **Create Heroku app**:
+2. **Create virtual environment (recommended)**
    ```bash
-   heroku create your-game-name
+   python -m venv .venv
    ```
 
-3. **Deploy**:
+3. **Activate virtual environment**
+   - **Windows:**
+     ```bash
+     .venv\Scripts\activate
+     ```
+   - **macOS/Linux:**
+     ```bash
+     source .venv/bin/activate
+     ```
+
+4. **Install dependencies**
    ```bash
-   git add .
-   git commit -m "Initial deployment"
-   git push heroku main
+   pip install -r requirements.txt
    ```
 
-4. **Open your app**:
+5. **Run the application**
    ```bash
-   heroku open
+   python app.py
    ```
 
-### Option 2: Render (Free tier available)
+6. **Open in browser**
+   - Navigate to `http://localhost:5000`
+   - Open multiple browser tabs to test multiplayer functionality
 
-1. **Connect your GitHub repository** to Render
-2. **Create a new Web Service**
-3. **Configure**:
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn --worker-class eventlet -w 1 app:app`
-   - **Environment**: Python 3.11.7
+## 🎮 **How to Play**
 
-4. **Deploy** - Render will automatically deploy from your repository
+### **Game Selection**
+1. Open the game in your browser
+2. Choose between "Guess the Number" or "Street Food Showdown"
+3. Create a room or join an existing one
 
-### Option 3: Railway
+### **Room Management**
+1. **Create Room**: Enter your nickname and create a new room
+2. **Join Room**: Enter your nickname and the 6-digit room code
+3. **Share Code**: Share the room code with friends to join
 
-1. **Connect your GitHub repository** to Railway
-2. **Railway will auto-detect** the Python app
-3. **Deploy** - Railway handles the rest automatically
+### **Admin Controls**
+- The first player to join becomes the admin
+- Admin can select game type and start rounds
+- If admin leaves, admin role transfers to next player
 
-### Option 4: PythonAnywhere
+### **Guess the Number Game**
+1. Admin starts a round
+2. Server picks a random number (1-100)
+3. Players take turns guessing
+4. Server responds with "Too High", "Too Low", or "Correct!"
+5. First correct guess wins the round
+6. Admin can start new rounds
 
-1. **Upload your files** to PythonAnywhere
-2. **Create a new web app** with Flask
-3. **Set the working directory** to your project folder
-4. **Configure WSGI file** to point to your app
-5. **Reload** the web app
+### **Street Food Showdown Game**
+1. Admin selects "Street Food Showdown" and starts the game
+2. Each round features a different Indian street food
+3. **Round Structure:**
+   - **Description Phase** (15s): Read the food description
+   - **Image Hint** (15s): See the food image
+   - **Answer Phase**: Choose from 4 multiple choice options
+4. **Scoring:**
+   - Base: 10 points for correct answer
+   - Speed bonus: +5 points for quick answers
+   - Image penalty: -2 points after image reveal
+5. **Special Rounds:**
+   - **Normal**: Standard description → image flow
+   - **Slang**: Include local Hindi names
+   - **Reverse**: Image first, then description
+   - **Fusion**: Fun made-up fusion foods
+6. **Game End**: After 5 rounds, final leaderboard is shown
 
-## 🔧 Production Configuration
+## 🛠️ **Technical Features**
 
-For production deployment, consider these optimizations:
+### **Backend (Python Flask + Socket.IO)**
+- Real-time bidirectional communication
+- Room-based multiplayer system
+- Admin role management
+- Game state synchronization
+- Chat functionality
+- Score tracking
 
-### Environment Variables
+### **Frontend (HTML/CSS/JavaScript)**
+- Responsive design for desktop and mobile
+- Real-time UI updates
+- Game selection interface
+- Chat system
+- Player list and score display
+- Timer and round management
 
-Create a `.env` file for local development:
-```env
-FLASK_ENV=development
-FLASK_SECRET_KEY=your-secret-key-here
-```
+### **Game Features**
+- **Modular Architecture**: Easy to add new games
+- **Real-time Updates**: Live score updates and chat
+- **Admin Controls**: Game management and round control
+- **Player Management**: Join/leave handling with admin transfer
+- **Error Handling**: Graceful error management
+- **Mobile Support**: Responsive design for all devices
 
-### Production Settings
+## 📱 **Multiplayer Testing**
 
-The app is configured for production with:
-- **Gunicorn** as the WSGI server
-- **Eventlet** for Socket.IO compatibility
-- **Single worker** to avoid Socket.IO conflicts
+### **Local Testing**
+1. Start the server: `python app.py`
+2. Open multiple browser tabs/windows
+3. Join the same room with different nicknames
+4. Test all game features simultaneously
 
-### Scaling Considerations
+### **Network Testing**
+1. Find your local IP address
+2. Share the IP with friends on the same network
+3. Friends can access via `http://YOUR_IP:5000`
 
-- **Current setup**: Single worker (suitable for small to medium games)
-- **For larger scale**: Consider Redis for Socket.IO message queue
-- **Database**: Current in-memory storage resets on server restart
+## 🚀 **Deployment**
 
-## 📁 Project Structure
+### **Quick Deployment Scripts**
+- **Windows**: Run `start_app.bat`
+- **PowerShell**: Run `start_app.ps1`
 
-```
-guess-the-number/
-├── app.py              # Flask backend with Socket.IO and room system
-├── templates/
-│   └── index.html      # Single HTML page with embedded CSS/JS
-├── requirements.txt    # Python dependencies
-├── Procfile           # Heroku deployment configuration
-├── runtime.txt        # Python version specification
-├── render.yaml        # Render deployment configuration
-└── README.md          # This file
-```
+### **Manual Deployment**
+1. Install dependencies: `pip install -r requirements.txt`
+2. Run the app: `python app.py`
+3. Access via browser at the displayed URL
 
-## 🔧 Backend Code Overview
+### **Production Deployment**
+The app includes configuration files for various hosting platforms:
+- **Railway**: `railway.json`
+- **Render**: `render.yaml`
+- **Heroku**: `Procfile`
+- **Fly.io**: `fly.toml`
+- **Vercel**: `vercel.json`
 
-The Flask backend (`app.py`) includes:
+## 🎯 **Game Data**
 
-- **Room management** with unique 6-character codes
-- **Socket.IO event handlers** for real-time communication
-- **Player management** (join, leave, score tracking)
-- **Game logic** (number generation, guess validation, scoring)
-- **Chat system** for player communication
-- **API endpoints** for room creation and management
+### **Street Food Dataset**
+The game includes 8 authentic Indian street foods:
+- Pani Puri (Golgappa, Phuchka)
+- Vada Pav (Bombay Burger)
+- Samosa
+- Dosa
+- Bhel Puri
+- Pav Bhaji
+- Chaat
+- Kebab
 
-## 🎨 Frontend Features
+Each food includes:
+- Official name
+- Detailed description
+- Local slang names
+- Search terms for image fetching
 
-- **Single HTML page** with embedded CSS and JavaScript
-- **Room-based navigation** (welcome, create, join, game screens)
-- **Responsive grid layout** that adapts to screen size
-- **Real-time updates** for players, scores, and chat
-- **Clean, minimal design** with gradient background
-- **Keyboard shortcuts** (Enter key for inputs)
+## 🔧 **Customization**
 
-## 🐛 Troubleshooting
+### **Adding New Games**
+1. Add game logic to `app.py`
+2. Update frontend in `templates/index.html`
+3. Add game selection options
+4. Test thoroughly
 
-### Common Issues:
+### **Adding More Street Foods**
+1. Add new entries to the `STREET_FOODS` list in `app.py`
+2. Include name, description, slang names, and search terms
+3. Test with the game
 
-1. **Port already in use**: Change the port in `app.py` line 85
-2. **Socket.IO connection failed**: Check if the server is running
-3. **Players not updating**: Refresh the browser page
-4. **Room not found**: Check the room code spelling
+## 🐛 **Troubleshooting**
 
-### Deployment Issues:
+### **Common Issues**
+1. **Port already in use**: Change port in `app.py` or kill existing process
+2. **Dependencies not found**: Ensure virtual environment is activated
+3. **Socket connection failed**: Check firewall settings
+4. **Game not starting**: Ensure admin has selected a game type
 
-1. **Heroku build fails**: Check `requirements.txt` and `Procfile`
-2. **Socket.IO not working**: Ensure using `eventlet` worker class
-3. **App crashes**: Check logs with `heroku logs --tail`
+### **Debug Mode**
+The app runs in debug mode by default. For production, set `debug=False` in `app.py`.
 
-### Debug Mode:
-
-The application runs in debug mode locally. For production, set:
-```bash
-export FLASK_ENV=production
-```
-
-## 🔮 Future Enhancements
-
-This minimal implementation can be expanded with:
-
-- **Persistent database storage** (PostgreSQL, MongoDB)
-- **User authentication** and profiles
-- **Multiple game modes** (different number ranges, time limits)
-- **Tournament system** with brackets
-- **Spectator mode** for watching games
-- **Sound effects and animations**
-- **Mobile app** using React Native or Flutter
-
-## 📄 License
+## 📄 **License**
 
 This project is open source and available under the MIT License.
 
+## 🤝 **Contributing**
+
+Feel free to contribute by:
+- Adding new games
+- Improving the UI/UX
+- Adding more street food items
+- Enhancing the scoring system
+- Adding new features
+
+## 🎉 **Enjoy Playing!**
+
+The Multiplayer Game Hub is now ready for hours of fun with friends! Test your number guessing skills or challenge your knowledge of Indian street food in this engaging multiplayer experience.
+
 ---
 
-**Happy Guessing! 🎯** 
+**Built with ❤️ using Python Flask, Socket.IO, and modern web technologies** 
