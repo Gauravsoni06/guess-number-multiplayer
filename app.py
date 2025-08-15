@@ -6,65 +6,14 @@ import time
 import requests
 import json
 from datetime import datetime
+from street_food_data import STREET_FOODS, FUSION_FOODS, get_random_fusion_food
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Game state storage
+# In-memory storage for rooms and game state
 rooms = {}
-
-# Street Food dataset
-STREET_FOODS = [
-    {
-        "name": "Pani Puri",
-        "description": "A crispy hollow sphere filled with tangy spiced water and potato mix.",
-        "slang": ["Golgappa", "Phuchka"],
-        "search_terms": "pani puri golgappa indian street food"
-    },
-    {
-        "name": "Vada Pav",
-        "description": "A spicy potato fritter served inside a bun with chutneys.",
-        "slang": ["Bombay Burger"],
-        "search_terms": "vada pav bombay burger indian street food"
-    },
-    {
-        "name": "Samosa",
-        "description": "A crispy pastry filled with spiced potatoes and peas.",
-        "slang": ["Samosa"],
-        "search_terms": "samosa indian street food"
-    },
-    {
-        "name": "Dosa",
-        "description": "A thin, crispy crepe made from fermented rice and lentil batter.",
-        "slang": ["Dosa"],
-        "search_terms": "dosa indian street food"
-    },
-    {
-        "name": "Bhel Puri",
-        "description": "A mixture of puffed rice, vegetables, and tangy chutneys.",
-        "slang": ["Bhel"],
-        "search_terms": "bhel puri indian street food"
-    },
-    {
-        "name": "Pav Bhaji",
-        "description": "Spiced mashed vegetables served with buttered bread rolls.",
-        "slang": ["Pav Bhaji"],
-        "search_terms": "pav bhaji indian street food"
-    },
-    {
-        "name": "Chaat",
-        "description": "A savory snack with crispy base, yogurt, and various toppings.",
-        "slang": ["Chaat"],
-        "search_terms": "chaat indian street food"
-    },
-    {
-        "name": "Kebab",
-        "description": "Grilled meat or vegetable skewers with aromatic spices.",
-        "slang": ["Kebab"],
-        "search_terms": "kebab indian street food"
-    }
-]
 
 # Image cache for performance
 image_cache = {}
@@ -374,8 +323,8 @@ def handle_start_round(data):
             round_data['options'] = room['food_options']
         elif room['round_type'] == 'fusion':
             # Made-up fusion food
-            fusion_foods = ['Pizza Dosa', 'Burger Samosa', 'Taco Puri', 'Sushi Chaat']
-            round_data['description'] = f"Fusion food: {random.choice(fusion_foods)} - {room['current_food']['description']}"
+            fusion_food = get_random_fusion_food()
+            round_data['description'] = f"Fusion food: {fusion_food} - {room['current_food']['description']}"
             round_data['options'] = room['food_options']
         
         emit('street_food_round_started', round_data, room=room_code)
